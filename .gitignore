@@ -1,0 +1,6 @@
+credentials.json
+token.pickle
+processed_emails.json
+.env
+__pycache__/
+*.pyc
