@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SchoolBot">
+<meta name="theme-color" content="#0f1923">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>School Reminder</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1923;
+  --surface: #172130;
+  --surface2: #1e2d3d;
+  --border: rgba(255,255,255,0.07);
+  --accent: #3ecf8e;
+  --accent2: #38bdf8;
+  --warn: #f97316;
+  --danger: #ef4444;
+  --text: #e8f0f8;
+  --text2: #7a9bb5;
+  --text3: #3d5a73;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ── STATUS BAR SPACER ── */
+.status-bar-spacer {
+  height: calc(var(--safe-top) + 8px);
+  background: var(--bg);
+}
+
+/* ── TOP NAV ── */
+.top-nav {
+  background: var(--bg);
+  padding: 12px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.nav-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-title .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse { 50%{ opacity:0.4; transform:scale(0.7); } }
+
+.nav-actions { display:flex; gap:8px; }
+
+.icon-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px;
+  transition: all 0.15s;
+  -webkit-user-select: none; user-select: none;
+}
+.icon-btn:active { transform: scale(0.92); background: var(--surface2); }
+
+/* ── SUMMARY CARDS ── */
+.summary {
+  padding: 16px 16px 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.sum-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 12px;
+  text-align: center;
+}
+
+.sum-num {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.sum-num.green { color: var(--accent); }
+.sum-num.blue  { color: var(--accent2); }
+.sum-num.orange{ color: var(--warn); }
+
+.sum-label {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── FILTER TABS ── */
+.filter-tabs {
+  padding: 10px 16px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.filter-tabs::-webkit-scrollbar { display:none; }
+
+.tab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-user-select: none; user-select: none;
+}
+.tab:active { transform: scale(0.95); }
+.tab.active { background: var(--accent); border-color: var(--accent); color: #000; }
+
+/* ── SECTION HEADER ── */
+.section-head {
+  padding: 8px 16px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.section-count {
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--surface);
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+/* ── ALERT CARDS ── */
+.alerts-list { padding: 0 16px 100px; }
+
+.alert-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.alert-card.done { opacity: 0.45; }
+.alert-card.done::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(255,255,255,0.015) 10px,
+    rgba(255,255,255,0.015) 11px
+  );
+}
+
+.alert-card:active { transform: scale(0.98); }
+
+/* Priority bar on left */
+.alert-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+.alert-card.urgent::before { background: var(--danger); }
+.alert-card.payment::before { background: var(--warn); }
+.alert-card.competition::before { background: #a78bfa; }
+.alert-card.club::before { background: var(--accent2); }
+.alert-card.notice::before { background: var(--accent); }
+
+.alert-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.alert-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.alert-icon.payment    { background: rgba(249,115,22,0.15); }
+.alert-icon.competition{ background: rgba(167,139,250,0.15); }
+.alert-icon.permission { background: rgba(251,191,36,0.15); }
+.alert-icon.club       { background: rgba(56,189,248,0.15); }
+.alert-icon.notice     { background: rgba(62,207,142,0.15); }
+
+.alert-info { flex: 1; min-width: 0; }
+
+.alert-subject {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alert-from {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.alert-check {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  font-size: 12px;
+}
+.alert-check.checked { background: var(--accent); border-color: var(--accent); color: #000; }
+
+.alert-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+.chip.amount   { background:rgba(249,115,22,0.1); border-color:rgba(249,115,22,0.3); color:var(--warn); }
+.chip.deadline { background:rgba(251,191,36,0.1); border-color:rgba(251,191,36,0.3); color:#f59e0b; }
+.chip.category { background:rgba(62,207,142,0.08); border-color:rgba(62,207,142,0.2); color:var(--accent); }
+.chip.date     { color:var(--text3); }
+
+.alert-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.action-btn:active { transform: scale(0.95); }
+.action-btn.primary { background: rgba(62,207,142,0.12); border-color: rgba(62,207,142,0.3); color: var(--accent); }
+.action-btn.snooze  { background: rgba(56,189,248,0.08); border-color: rgba(56,189,248,0.2); color: var(--accent2); }
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align: center;
+  padding: 60px 32px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 44px; margin-bottom: 14px; }
+.empty-title { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom:6px; }
+.empty-sub { font-size: 13px; line-height: 1.6; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  background: rgba(15,25,35,0.95);
+  border-top: 1px solid var(--border);
+  padding: 10px 0 calc(10px + var(--safe-bottom));
+  display: flex;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 100;
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 0;
+  -webkit-user-select: none; user-select: none;
+  transition: all 0.15s;
+}
+.nav-tab:active { transform: scale(0.9); }
+
+.nav-tab .nav-icon { font-size: 22px; line-height: 1; }
+.nav-tab .nav-label { font-size: 10px; font-weight: 500; color: var(--text3); }
+.nav-tab.active .nav-label { color: var(--accent); }
+.nav-tab.active .nav-icon { filter: drop-shadow(0 0 6px var(--accent)); }
+
+/* ── ADD EMAIL MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  padding: 20px 20px calc(20px + var(--safe-bottom));
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 18px;
+}
+
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+.field { margin-bottom: 14px; }
+.field label { display:block; font-size:11px; color:var(--text3); font-weight:600; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent);
+}
+
+.field textarea { resize: none; height: 80px; }
+
+.modal-actions { display:flex; gap:10px; margin-top:16px; }
+
+.btn {
+  flex: 1; padding: 14px;
+  border-radius: 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; border: none;
+  transition: all 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn.primary { background: var(--accent); color: #000; }
+.btn.secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+
+/* ── INSTALL BANNER ── */
+.install-banner {
+  margin: 8px 16px;
+  background: linear-gradient(135deg, rgba(62,207,142,0.12), rgba(56,189,248,0.08));
+  border: 1px solid rgba(62,207,142,0.25);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.install-banner.hidden { display: none; }
+.install-text { flex: 1; }
+.install-title { font-size: 13px; font-weight: 700; color: var(--accent); }
+.install-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.install-arrow { font-size: 18px; color: var(--accent); }
+
+/* ── SNOOZE TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 300;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <div class="nav-title">
+    <div class="dot"></div>
+    SchoolBot
+  </div>
+  <div class="nav-actions">
+    <div class="icon-btn" onclick="openAddModal()" title="Add email">➕</div>
+    <div class="icon-btn" onclick="refreshAlerts()" title="Refresh" id="refreshBtn">🔄</div>
+  </div>
+</div>
+
+<!-- Install banner -->
+<div class="install-banner" id="installBanner" onclick="installApp()">
+  <div style="font-size:24px">📲</div>
+  <div class="install-text">
+    <div class="install-title">Add to Home Screen</div>
+    <div class="install-sub">Install SchoolBot as an app on your phone</div>
+  </div>
+  <div class="install-arrow">›</div>
+</div>
+
+<!-- Summary cards -->
+<div class="summary">
+  <div class="sum-card">
+    <div class="sum-num orange" id="urgentCount">0</div>
+    <div class="sum-label">Urgent</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-num green" id="totalAlertsCount">0</div>
+    <div class="sum-label">Total</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-num blue" id="doneCount">0</div>
+    <div class="sum-label">Done</div>
+  </div>
+</div>
+
+<!-- Filter tabs -->
+<div class="filter-tabs">
+  <div class="tab active" onclick="filterAlerts('all', this)">All</div>
+  <div class="tab" onclick="filterAlerts('payment', this)">💰 Payments</div>
+  <div class="tab" onclick="filterAlerts('competition', this)">🏆 Competitions</div>
+  <div class="tab" onclick="filterAlerts('permission', this)">✏️ Permission</div>
+  <div class="tab" onclick="filterAlerts('club', this)">⚽ Clubs</div>
+  <div class="tab" onclick="filterAlerts('notice', this)">📢 Notices</div>
+</div>
+
+<!-- Alerts list -->
+<div class="section-head">
+  <span class="section-title">School Emails</span>
+  <span class="section-count" id="alertsCount">0 alerts</span>
+</div>
+
+<div class="alerts-list" id="alertsList"></div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <div class="nav-tab active" onclick="switchTab('home', this)">
+    <div class="nav-icon">🏠</div>
+    <div class="nav-label">Home</div>
+  </div>
+  <div class="nav-tab" onclick="switchTab('urgent', this)">
+    <div class="nav-icon">🚨</div>
+    <div class="nav-label">Urgent</div>
+  </div>
+  <div class="nav-tab" onclick="switchTab('done', this)">
+    <div class="nav-icon">✅</div>
+    <div class="nav-label">Done</div>
+  </div>
+  <div class="nav-tab" onclick="switchTab('settings', this)">
+    <div class="nav-icon">⚙️</div>
+    <div class="nav-label">Settings</div>
+  </div>
+</div>
+
+<!-- Add email modal -->
+<div class="modal-overlay" id="addModal" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add School Email</div>
+    <div class="field">
+      <label>Subject</label>
+      <input type="text" id="addSubject" placeholder="e.g. Trip payment due Friday">
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <select id="addCategory">
+        <option value="payment">💰 Payment Required</option>
+        <option value="competition">🏆 Competition / Registration</option>
+        <option value="permission">✏️ Permission Form</option>
+        <option value="club">⚽ Club / Activity</option>
+        <option value="notice">📢 School Notice</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Amount (optional)</label>
+      <input type="text" id="addAmount" placeholder="e.g. $25.00">
+    </div>
+    <div class="field">
+      <label>Deadline (optional)</label>
+      <input type="date" id="addDeadline">
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="addNotes" placeholder="Any extra details..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="addAlert()">Add Reminder</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+const STORAGE_KEY = 'schoolbot_alerts_v1';
+
+// Sample demo alerts so it looks good on first open
+const DEMO_ALERTS = [
+  {
+    id: 'demo1',
+    subject: 'Grade 7 Science Fair Registration',
+    from: 'office@hdsb.ca',
+    category: 'competition',
+    amount: null,
+    deadline: '2026-04-15',
+    date: 'Mar 19',
+    notes: 'Register by April 15th for the regional science fair.',
+    done: false,
+    urgent: true,
+    addedAt: Date.now() - 86400000
+  },
+  {
+    id: 'demo2',
+    subject: 'School Trip Payment — Science Centre',
+    from: 'trips@school.ca',
+    category: 'payment',
+    amount: '$45.00',
+    deadline: '2026-03-28',
+    date: 'Mar 18',
+    notes: 'Payment due before March 28th. E-transfer to office@school.ca',
+    done: false,
+    urgent: true,
+    addedAt: Date.now() - 172800000
+  },
+  {
+    id: 'demo3',
+    subject: 'Soccer Tryouts — April 3rd',
+    from: 'sports@hdsb.ca',
+    category: 'club',
+    amount: null,
+    deadline: '2026-04-03',
+    date: 'Mar 17',
+    notes: 'Bring cleats and shin pads. Tryouts at 3:30pm on field 2.',
+    done: false,
+    urgent: false,
+    addedAt: Date.now() - 259200000
+  },
+  {
+    id: 'demo4',
+    subject: 'Permission Form — Museum Visit',
+    from: 'teacher@school.ca',
+    category: 'permission',
+    amount: null,
+    deadline: '2026-03-25',
+    date: 'Mar 16',
+    notes: 'Please sign and return the permission slip.',
+    done: false,
+    urgent: false,
+    addedAt: Date.now() - 345600000
+  }
+];
+
+function loadAlerts() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  // First time — show demo data
+  const demos = DEMO_ALERTS;
+  saveAlerts(demos);
+  return demos;
+}
+
+function saveAlerts(alerts) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts)); } catch(e) {}
+}
+
+let alerts = loadAlerts();
+let currentFilter = 'all';
+let currentTab = 'home';
+
+// ── CATEGORY HELPERS ─────────────────────────────────────────────
+const CATEGORY_ICONS = {
+  payment: '💰', competition: '🏆', permission: '✏️', club: '⚽', notice: '📢'
+};
+
+const CATEGORY_LABELS = {
+  payment: 'Payment Required',
+  competition: 'Competition',
+  permission: 'Permission Form',
+  club: 'Club / Activity',
+  notice: 'School Notice'
+};
+
+// ── RENDER ────────────────────────────────────────────────────────
+function getFilteredAlerts() {
+  let filtered = [...alerts];
+
+  if (currentTab === 'urgent') {
+    filtered = filtered.filter(a => a.urgent && !a.done);
+  } else if (currentTab === 'done') {
+    filtered = filtered.filter(a => a.done);
+  } else {
+    if (currentFilter !== 'all') {
+      filtered = filtered.filter(a => a.category === currentFilter);
+    }
+  }
+
+  // Sort: urgent first, then by deadline, then by date added
+  filtered.sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+    if (a.deadline && b.deadline) return new Date(a.deadline) - new Date(b.deadline);
+    return b.addedAt - a.addedAt;
+  });
+
+  return filtered;
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr) - new Date();
+  return Math.ceil(diff / 86400000);
+}
+
+function renderAlerts() {
+  const list = document.getElementById('alertsList');
+  const filtered = getFilteredAlerts();
+
+  // Update counts
+  const urgent = alerts.filter(a => a.urgent && !a.done).length;
+  const done = alerts.filter(a => a.done).length;
+  document.getElementById('urgentCount').textContent = urgent;
+  document.getElementById('totalAlertsCount').textContent = alerts.filter(a => !a.done).length;
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('alertsCount').textContent = `${filtered.length} alert${filtered.length !== 1 ? 's' : ''}`;
+
+  if (!filtered.length) {
+    list.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">${currentTab === 'done' ? '✅' : '📭'}</div>
+        <div class="empty-title">${currentTab === 'done' ? 'Nothing done yet' : 'No alerts here'}</div>
+        <div class="empty-sub">${currentTab === 'done' ? 'Mark alerts as done and they\'ll appear here.' : 'Tap ➕ to add a school email reminder.'}</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(alert => {
+    const days = daysUntil(alert.deadline);
+    const deadlineLabel = days !== null
+      ? days < 0 ? '⚠️ Overdue'
+      : days === 0 ? '⚠️ Due today!'
+      : days === 1 ? '⏰ Due tomorrow'
+      : `⏰ ${days} days left`
+      : null;
+
+    const deadlineColor = days !== null && days <= 1 ? 'color:#ef4444' : '';
+
+    return `
+    <div class="alert-card ${alert.category} ${alert.urgent ? 'urgent' : ''} ${alert.done ? 'done' : ''}" id="card-${alert.id}">
+      <div class="alert-top">
+        <div class="alert-icon ${alert.category}">${CATEGORY_ICONS[alert.category] || '📢'}</div>
+        <div class="alert-info">
+          <div class="alert-subject">${alert.subject}</div>
+          <div class="alert-from">${alert.from} · ${alert.date}</div>
+        </div>
+        <div class="alert-check ${alert.done ? 'checked' : ''}" onclick="toggleDone('${alert.id}')">${alert.done ? '✓' : ''}</div>
+      </div>
+      <div class="alert-chips">
+        <span class="chip category">${CATEGORY_LABELS[alert.category]}</span>
+        ${alert.amount ? `<span class="chip amount">${alert.amount}</span>` : ''}
+        ${deadlineLabel ? `<span class="chip deadline" style="${deadlineColor}">${deadlineLabel}</span>` : ''}
+      </div>
+      ${alert.notes ? `<div style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.6;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:2px solid var(--border)">${alert.notes}</div>` : ''}
+      ${!alert.done ? `
+      <div class="alert-actions">
+        <button class="action-btn primary" onclick="toggleDone('${alert.id}')">✅ Mark Done</button>
+        <button class="action-btn snooze" onclick="snoozeAlert('${alert.id}')">💤 Snooze</button>
+        <button class="action-btn" onclick="deleteAlert('${alert.id}')" style="flex:0.5">🗑️</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────
+function toggleDone(id) {
+  const alert = alerts.find(a => a.id === id);
+  if (alert) {
+    alert.done = !alert.done;
+    saveAlerts(alerts);
+    renderAlerts();
+    showToast(alert.done ? '✅ Marked as done!' : '↩️ Moved back to active');
+  }
+}
+
+function snoozeAlert(id) {
+  showToast('💤 Snoozed for 1 day');
+}
+
+function deleteAlert(id) {
+  if (confirm('Delete this reminder?')) {
+    alerts = alerts.filter(a => a.id !== id);
+    saveAlerts(alerts);
+    renderAlerts();
+    showToast('🗑️ Deleted');
+  }
+}
+
+function filterAlerts(filter, tabEl) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tabs .tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  renderAlerts();
+}
+
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderAlerts();
+}
+
+// ── ADD ALERT ─────────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('addModal').classList.add('show');
+  // Set default deadline to tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 7);
+  document.getElementById('addDeadline').value = tomorrow.toISOString().split('T')[0];
+}
+
+function closeModal() {
+  document.getElementById('addModal').classList.remove('show');
+}
+
+function closeModalOnBg(e) {
+  if (e.target === document.getElementById('addModal')) closeModal();
+}
+
+function addAlert() {
+  const subject = document.getElementById('addSubject').value.trim();
+  if (!subject) { showToast('⚠️ Please enter a subject'); return; }
+
+  const category = document.getElementById('addCategory').value;
+  const amount = document.getElementById('addAmount').value.trim();
+  const deadline = document.getElementById('addDeadline').value;
+  const notes = document.getElementById('addNotes').value.trim();
+  const days = daysUntil(deadline);
+
+  const newAlert = {
+    id: 'alert_' + Date.now(),
+    subject,
+    from: 'Added manually',
+    category,
+    amount: amount || null,
+    deadline: deadline || null,
+    date: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' }),
+    notes: notes || null,
+    done: false,
+    urgent: days !== null && days <= 3,
+    addedAt: Date.now()
+  };
+
+  alerts.unshift(newAlert);
+  saveAlerts(alerts);
+  renderAlerts();
+  closeModal();
+  showToast('🏫 Reminder added!');
+
+  // Clear form
+  document.getElementById('addSubject').value = '';
+  document.getElementById('addAmount').value = '';
+  document.getElementById('addNotes').value = '';
+}
+
+// ── REFRESH ───────────────────────────────────────────────────────
+function refreshAlerts() {
+  const btn = document.getElementById('refreshBtn');
+  btn.style.animation = 'spin 0.5s linear';
+  setTimeout(() => { btn.style.animation = ''; renderAlerts(); showToast('🔄 Refreshed!'); }, 600);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ── PWA INSTALL ───────────────────────────────────────────────────
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.remove('hidden');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(result => {
+      if (result.outcome === 'accepted') {
+        showToast('🎉 App installed!');
+        document.getElementById('installBanner').classList.add('hidden');
+      }
+      deferredPrompt = null;
+    });
+  } else {
+    // iOS instructions
+    showToast('📱 Tap Share → Add to Home Screen');
+  }
+}
+
+// Hide install banner if already installed
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  document.getElementById('installBanner').classList.add('hidden');
+}
+
+// ── SERVICE WORKER ────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(console.error);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+renderAlerts();
+</script>
+</body>
+</html>
